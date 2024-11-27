@@ -1,0 +1,53 @@
+
+stages:
+  - requirements
+  - tests
+  - deploy
+
+requirements:
+  stage: requirements
+  tags:
+    - recettess
+  script:
+    - composer install -n
+  artifacts:
+    paths:
+      - ./
+  cache:
+    paths:
+      - vendor/
+
+tests:
+  stage: tests
+  tags:
+    - recettess
+  artifacts:
+    paths:
+      - vendor/
+      - composer.phar
+      - .env
+  script:
+    -  XDEBUG_MODE=coverage ./vendor/bin/phpunit --coverage-text --colors=never
+
+recette:
+  stage: deploy
+  tags:
+    - recettess
+  environment:
+    name: recettess
+    url: http://192.168.56.30:8000/
+  script:
+    - php -S 0.0.0.0:8000 -t public
+
+production:
+  stage: deploy
+  tags:
+    - productions
+  only:
+    - master
+  when: manual
+  environment:
+    name: productions
+    url: http://192.168.56.40:8000/
+  script:
+    - php bin/console server:start 0.0.0.0:8000 -q
